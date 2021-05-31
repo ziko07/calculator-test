@@ -1,0 +1,22 @@
+.card-wrapper {
+  padding-top: 100px;
+
+  .card {
+    width: 50%;
+    margin: auto;
+
+    .row-margin-top {
+      margin-top: 30px;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .error {
+      color: red;
+      font-size: 12px;
+      padding: 5px;
+    }
+  }
+}

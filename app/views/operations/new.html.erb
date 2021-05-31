@@ -1,0 +1,158 @@
+<div class="card-wrapper">
+  <div class="card">
+    <div class="card-body">
+      <%= image_tag 'onepagelogo.png' %>
+
+      <div class="form-wrapper row-margin-top">
+        <%= form_for @operation do |form| %>
+          <div class="row">
+            <div class="col">
+              <%= form.number_field :input1, class: 'form-control', placeholder: 'Enter number 1', min: 0, max: 99, step: 1 %>
+              <div class="error"></div>
+            </div>
+            <div class="col">
+              <%= form.number_field :input2, class: 'form-control', placeholder: 'Enter number 2', min: 0, max: 99, step: 1 %>
+              <div class="error"></div>
+            </div>
+          </div>
+
+          <div class="row row-margin-top">
+            <div class="col">
+              <%= form.submit 'Sum', class: 'btn btn-primary btn-block btn-calculate' %>
+            </div>
+            <div class="col">
+              <%= form.submit 'Difference', class: 'btn btn-info btn-block btn-calculate' %>
+            </div>
+            <div class="col">
+              <%= form.submit 'Multiplication', class: 'btn btn-success btn-block btn-calculate' %>
+            </div>
+            <div class="col">
+              <%= form.submit 'Division', class: 'btn btn-warning btn-block btn-calculate' %>
+            </div>
+          </div>
+
+          <div class="row row-margin-top">
+            <div class="col">
+              <%= form.text_area :result, class: 'form-control', rows: '6', readonly: true, placeholder: 'Result here' %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+    input1 = $('#operation_input1');
+    input2 = $('#operation_input2');
+    isValid = false;
+
+    $(function () {
+        $('.btn-calculate').click(function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            executeOperation($(this).val().toLowerCase());
+        });
+
+        input1.on('keyup', function () {
+            checkInputsValidity();
+            enableDisableButtons();
+        });
+
+        input2.on('keyup', function () {
+            checkInputsValidity();
+            enableDisableButtons();
+        });
+
+        checkInputsValidity();
+        enableDisableButtons();
+    });
+
+    function checkInputsValidity() {
+        let isInput1Valid = isValidInput(input1);
+        let isInput2Valid = isValidInput(input2);
+        isValid = isInput1Valid && isInput2Valid
+        enableDisableButtons();
+    }
+
+    function isValidInput(inputElement) {
+        let value = inputElement.val();
+        if (value) {
+            try {
+                value = parseFloat(value);
+
+                if (value < 0 || value > 99) {
+                    setErrorMessage(inputElement, 'Number must be non-negative and lower than 99');
+                    return false;
+                } else if (inputElement == input2 && value == 0) {
+                    setErrorMessage(inputElement, '');
+                    setTimeout(function () {
+                        $("input[value='Division']").prop('disabled', true);
+                    }, 500);
+                    return true;
+                } else {
+                    setErrorMessage(inputElement, '');
+                    return true;
+                }
+            } catch {
+                setErrorMessage(inputElement, 'Invalid number');
+                return false;
+            }
+        } else {
+            setErrorMessage(inputElement, 'This field is required');
+            return false;
+        }
+    }
+
+    function setErrorMessage(inputElement, msg) {
+        inputElement.parent().find('.error').html(msg);
+    }
+
+    function enableDisableButtons() {
+        $('.btn-calculate').each(function() {
+            $(this).prop('disabled', !isValid);
+        })
+    }
+
+    function executeOperation(action) {
+        if (isValid) {
+            let a = input1.val(), b = input2.val();
+
+            request(a, b, action);
+        } else {
+            alert("Please enter non-negative integers lower than 100.");
+        }
+    }
+
+    function request(a, b, action) {
+        isValid = false;
+        enableDisableButtons();
+        $.ajax({
+            url: '/operations',
+            type: 'POST',
+            data: {
+                input1: a,
+                input2: b,
+                operation: action
+            },
+            dataType: 'json',
+            success: successHandler,
+            error: errorHandler
+        });
+    }
+
+    function successHandler(operation) {
+        checkInputsValidity();
+        if (operation) {
+            $('#operation_result').val("Operation: " + operation.operation + "\nResult: " + operation.result + "\nID: " + operation.id + "\nCount: " + operation.count);
+        } else {
+            alert("Invalid operation.");
+        }
+    }
+
+    function errorHandler(error) {
+        checkInputsValidity();
+        alert("Invalid operation.");
+    }
+</script>
